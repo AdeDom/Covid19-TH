@@ -1,22 +1,20 @@
-package com.adedom.covid19_th;
+package com.adedom.covid19_th
 
-import io.reactivex.Single;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
+import io.reactivex.Single
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 
-public class DefaultCovid19Repository {
+class DefaultCovid19Repository {
 
-    private Retrofit retrofit = new Retrofit.Builder()
+    private val retrofit = Retrofit.Builder()
             .baseUrl("https://covid19.th-stat.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .build();
+            .build()
 
-    private Covid19Api api = retrofit.create(Covid19Api.class);
+    private val api = retrofit.create(Covid19Api::class.java)
 
-    Single<Covid19Response> fetchCovid19() {
-        return api.fetchCovid19();
-    }
+    fun fetchCovid19(): Single<Covid19Response> = api.fetchCovid19()
 
 }
