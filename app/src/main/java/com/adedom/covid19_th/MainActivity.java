@@ -5,61 +5,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
+import androidx.lifecycle.ViewModelProvider;
 
 public class MainActivity extends AppCompatActivity {
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://covid19.th-stat.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .build();
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        Covid19Api api = retrofit.create(Covid19Api.class);
+        viewModel.covid19().observe(this, covid19Response -> {
+            ((TextView) findViewById(R.id.tvUpdateDate)).setText("" + covid19Response.getUpdateDate());
+            ((TextView) findViewById(R.id.tvConfirmed)).setText("" + covid19Response.getConfirmed());
+            ((TextView) findViewById(R.id.tvNewConfirmed)).setText("" + covid19Response.getNewConfirmed());
+        });
 
-        api.fetchCovid19()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<Covid19Response>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        compositeDisposable.add(d);
-                    }
+        viewModel.error().observe(this, throwable -> {
+            Toast.makeText(getBaseContext(), throwable.getMessage(), Toast.LENGTH_LONG).show();
+        });
 
-                    @Override
-                    public void onSuccess(Covid19Response covid19Response) {
-                        ((TextView) findViewById(R.id.tvUpdateDate)).setText("" + covid19Response.getUpdateDate());
-                        ((TextView) findViewById(R.id.tvConfirmed)).setText("" + covid19Response.getConfirmed());
-                        ((TextView) findViewById(R.id.tvNewConfirmed)).setText("" + covid19Response.getNewConfirmed());
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        compositeDisposable.clear();
+        viewModel.fetchCovid19();
     }
 
 }
