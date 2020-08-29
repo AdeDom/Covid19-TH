@@ -1,12 +1,12 @@
-package com.adedom.covid19_th
+package com.adedom.covid19_th.ui
 
 import android.os.Bundle
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import com.adedom.covid19_th.R
+import com.adedom.covid19_th.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private val viewModel by viewModel<MainViewModel>()
 
@@ -14,15 +14,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        viewModel.covid19.observe(this, { covid19Response ->
+        viewModel.covid19.observe { covid19Response ->
             tvUpdateDate.text = "" + covid19Response.updateDate
             tvConfirmed.text = "" + covid19Response.confirmed
             tvNewConfirmed.text = "" + covid19Response.newConfirmed
-        })
+        }
 
-        viewModel.error.observe(this, { throwable ->
-            Toast.makeText(baseContext, throwable.message, Toast.LENGTH_LONG).show()
-        })
+        viewModel.error.observeError()
 
         viewModel.fetchCovid19()
     }

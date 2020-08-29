@@ -1,5 +1,9 @@
-package com.adedom.covid19_th
+package com.adedom.covid19_th.di
 
+import com.adedom.covid19_th.data.network.Covid19Api
+import com.adedom.covid19_th.data.repository.DefaultCovid19Repository
+import com.adedom.covid19_th.data.repository.DefaultCovid19RepositoryImpl
+import com.adedom.covid19_th.ui.MainViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
