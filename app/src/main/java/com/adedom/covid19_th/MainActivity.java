@@ -2,16 +2,22 @@ package com.adedom.covid19_th;
 
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
+
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,24 +27,39 @@ public class MainActivity extends AppCompatActivity {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://covid19.th-stat.com/")
                 .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
 
         Covid19Api api = retrofit.create(Covid19Api.class);
 
-        api.fetchCovid19().enqueue(new Callback<Covid19Response>() {
+        api.fetchCovid19()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SingleObserver<Covid19Response>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        compositeDisposable.add(d);
+                    }
 
-            @Override
-            public void onResponse(Call<Covid19Response> call, Response<Covid19Response> response) {
-                ((TextView) findViewById(R.id.tvUpdateDate)).setText("" + response.body().getUpdateDate());
-                ((TextView) findViewById(R.id.tvConfirmed)).setText("" + response.body().getConfirmed());
-                ((TextView) findViewById(R.id.tvNewConfirmed)).setText("" + response.body().getNewConfirmed());
-            }
+                    @Override
+                    public void onSuccess(Covid19Response covid19Response) {
+                        ((TextView) findViewById(R.id.tvUpdateDate)).setText("" + covid19Response.getUpdateDate());
+                        ((TextView) findViewById(R.id.tvConfirmed)).setText("" + covid19Response.getConfirmed());
+                        ((TextView) findViewById(R.id.tvNewConfirmed)).setText("" + covid19Response.getNewConfirmed());
+                    }
 
-            @Override
-            public void onFailure(Call<Covid19Response> call, Throwable t) {
-            }
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
 
-        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
     }
 
 }
