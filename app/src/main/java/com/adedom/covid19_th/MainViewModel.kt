@@ -3,15 +3,17 @@ package com.adedom.covid19_th
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import io.reactivex.SingleObserver
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
-class MainViewModel : ViewModel() {
+class MainViewModel : ViewModel(), CoroutineScope {
 
-    private val compositeDisposable = CompositeDisposable()
+    private val job = SupervisorJob()
+    private val exceptionHandler = CoroutineExceptionHandler { _, err ->
+        _error.value = err
+    }
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main + exceptionHandler
 
     private val repository = DefaultCovid19Repository()
 
@@ -24,27 +26,19 @@ class MainViewModel : ViewModel() {
         get() = _error
 
     fun fetchCovid19() {
-        repository.fetchCovid19()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : SingleObserver<Covid19Response> {
-                    override fun onSubscribe(d: Disposable) {
-                        compositeDisposable.add(d)
-                    }
-
-                    override fun onSuccess(covid19Response: Covid19Response) {
-                        _covid19.value = covid19Response
-                    }
-
-                    override fun onError(e: Throwable) {
-                        _error.value = e
-                    }
-                })
+        launch {
+            try {
+                val response = repository.fetchCovid19()
+                _covid19.value = response
+            } catch (e: Throwable) {
+                _error.value = e
+            }
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        compositeDisposable.clear()
+        coroutineContext.cancel()
     }
 
 }
