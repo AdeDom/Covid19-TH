@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-class MainViewModel : ViewModel(), CoroutineScope {
+class MainViewModel(private val repository: DefaultCovid19Repository) : ViewModel(), CoroutineScope {
 
     private val job = SupervisorJob()
     private val exceptionHandler = CoroutineExceptionHandler { _, err ->
@@ -14,8 +14,6 @@ class MainViewModel : ViewModel(), CoroutineScope {
     }
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main + exceptionHandler
-
-    private val repository = DefaultCovid19Repository()
 
     private val _covid19 = MutableLiveData<Covid19Response>()
     val covid19: LiveData<Covid19Response>
