@@ -1,4 +1,4 @@
-package com.adedom.covid19_th.data.model
+package com.adedom.covid19_th.data.response
 
 import com.google.gson.annotations.SerializedName
 

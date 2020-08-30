@@ -1,8 +1,10 @@
-package com.adedom.covid19_th.ui
+package com.adedom.covid19_th.ui.main
 
+import android.content.Intent
 import android.os.Bundle
 import com.adedom.covid19_th.R
 import com.adedom.covid19_th.base.BaseActivity
+import com.adedom.covid19_th.ui.timeline.TimelineActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -23,6 +25,12 @@ class MainActivity : BaseActivity() {
         viewModel.error.observeError()
 
         viewModel.fetchCovid19()
+
+        btTimeline.setOnClickListener {
+            Intent(baseContext, TimelineActivity::class.java).apply {
+                startActivity(this)
+            }
+        }
     }
 
 }
